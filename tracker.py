@@ -831,9 +831,9 @@ class Tracker():
                 d = d1 + d2
                 pt = (pts_3d[42] * d1 + pts_3d[45] * d2) / d
             if i < 2:
-                reference = rmat.dot(pt)
-                reference = reference + face_info.translation
-                reference = self.camera.dot(reference)
+                reference = rmat.dot(pt) # Produces a vector with shape `(3,)`.
+                reference = reference + face_info.translation # Tries to add these values to each other. Because NumPy's broadcasting rules, adding these two arrays produces a `(1, 3)` array instead of the `(3,)` vector that the next matrix multiplication expects.
+                reference = self.camera.dot(reference) # Tries to multiply `(3, 3)` by `(1, 3)`, and NumPy throws an error: `ValueError: shapes (3,3) and (1,3) not aligned`.
                 depth = reference[2]
                 pt_3d = np.array([lms[66+i][0] * depth, lms[66+i][1] * depth, depth], np.float32)
                 pt_3d = self.inverse_camera.dot(pt_3d)
