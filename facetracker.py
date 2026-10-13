@@ -258,6 +258,9 @@ try:
         try:
             inference_start = time.perf_counter()
             faces = tracker.predict(frame)
+            
+            print('Faces detected:', len(faces))
+            
             if len(faces) > 0:
                 inference_time = (time.perf_counter() - inference_start)
                 total_tracking_time += inference_time
@@ -360,6 +363,7 @@ try:
                     log.flush()
 
             if detected and len(faces) < 40:
+                print('Sending data to:', target_ip, ':', target_port);
                 sock.sendto(packet, (target_ip, target_port))
 
             if out is not None:

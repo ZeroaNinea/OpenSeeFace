@@ -784,7 +784,8 @@ class Tracker():
             return False, np.zeros(4), np.zeros(3), 99999., pts_3d, lms
         else:
             face_info.rotation = np.transpose(face_info.rotation)
-            face_info.translation = np.transpose(face_info.translation)
+            # face_info.translation = np.transpose(face_info.translation)
+            face_info.translation = np.transpose(face_info.translation).flatten()
 
         rmat, _ = cv2.Rodrigues(rotation)
         inverse_rotation = np.linalg.inv(rmat)
@@ -1207,5 +1208,12 @@ class Tracker():
             print(f"Took {duration:.2f}ms (detect: {duration_fd:.2f}ms, crop: {duration_pp:.2f}ms, track: {duration_model:.2f}ms, 3D points: {duration_pnp:.2f}ms)")
 
         results = sorted(results, key=lambda x: x.id)
+
+        for face in results:
+          print(vars(face))
+
+        if results:
+          print("mouth_open:", results[0].current_features["mouth_open"])
+
 
         return results
