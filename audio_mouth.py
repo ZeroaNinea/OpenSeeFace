@@ -35,47 +35,47 @@ def get_default_input_device():
 
     raise RuntimeError("No audio input devices are available.")
 
-def test_microphone(device=None, duration=5):
-    """Print the microphone's RMS audio level for a few seconds."""
-    if device is None:
-        device = get_default_input_device()
+# def test_microphone(device=None, duration=5):
+#     """Print the microphone's RMS audio level for a few seconds."""
+#     if device is None:
+#         device = get_default_input_device()
 
-    sample_rate = 48000
-    block_size = 1024
+#     sample_rate = 48000
+#     block_size = 1024
 
-    print(f"Using audio device {device}.")
-    print("Speak normally, then remain quiet.")
+#     print(f"Using audio device {device}.")
+#     print("Speak normally, then remain quiet.")
 
-    with sd.InputStream(
-        device=device,
-        samplerate=sample_rate,
-        channels=1,
-        dtype="float32",
-        blocksize=block_size,
-    ) as stream:
-        start = time.monotonic()
+#     with sd.InputStream(
+#         device=device,
+#         samplerate=sample_rate,
+#         channels=1,
+#         dtype="float32",
+#         blocksize=block_size,
+#     ) as stream:
+#         start = time.monotonic()
 
-        while time.monotonic() - start < duration:
-            audio, overflowed = stream.read(block_size)
+#         while time.monotonic() - start < duration:
+#             audio, overflowed = stream.read(block_size)
 
-            rms = float(np.sqrt(np.mean(np.square(audio))))
-            peak = float(np.max(np.abs(audio)))
-            max_sample = float(np.max(audio))
+#             rms = float(np.sqrt(np.mean(np.square(audio))))
+#             peak = float(np.max(np.abs(audio)))
+#             max_sample = float(np.max(audio))
 
-            # print(f"\rRMS: {rms:.6f}", end="", flush=True)
+#             # print(f"\rRMS: {rms:.6f}", end="", flush=True)
 
-            print(
-                f"\rRMS: {rms:.6f} | "
-                f"Peak: {peak:.6f} | "
-                f"Max sample: {max_sample:.6f}",
-                end="",
-                flush=True,
-            )
+#             print(
+#                 f"\rRMS: {rms:.6f} | "
+#                 f"Peak: {peak:.6f} | "
+#                 f"Max sample: {max_sample:.6f}",
+#                 end="",
+#                 flush=True,
+#             )
 
-            if overflowed:
-                print("\nWarning: audio input overflowed.")
+#             if overflowed:
+#                 print("\nWarning: audio input overflowed.")
 
-        print("\nMicrophone test finished.")
+#         print("\nMicrophone test finished.")
 
 # if __name__ == "__main__":
 #     list_audio_devices()
@@ -86,11 +86,118 @@ def test_microphone(device=None, duration=5):
 #     except (sd.PortAudioError, RuntimeError) as error:
 #         print(f"Microphone test failed: {error}")
 
+def test_microphone(device=None, duration=15):
+    """Measure microphone levels over a fixed duration."""
+    if device is None:
+        device = get_default_input_device()
+
+    sample_rate = 48000
+    block_size = 1024
+    levels = []
+
+    print(f"Using audio device {device}.")
+    print("First remain quiet, then speak normally, then remain quiet again.")
+
+    with sd.InputStream(
+        device=device,
+        samplerate=sample_rate,
+        channels=1,
+        dtype="float32",
+        blocksize=block_size,
+    ) as stream:
+        start = time.monotonic()
+        next_report = start
+
+        while time.monotonic() - start < duration:
+            # audio, overflowed = stream.read(block_size)
+
+            # samples = audio.astype(np.float64)
+
+            # mean = float(np.mean(samples))
+            # rms = float(np.sqrt(np.mean(np.square(samples))))
+            # centered_rms = float(np.sqrt(np.mean(np.square(samples - mean))))
+            # peak = float(np.max(np.abs(samples)))
+
+            # if peak > 1.0:
+            #     print(f"\nWarning: audio sample exceeded 1.0: {peak:.4f}")
+
+            # levels.append(rms)
+
+            # now = time.monotonic()
+
+            # if now >= next_report:
+            #     recent = levels[-20:]
+
+            #     print(
+            #         f"\rRMS: {rms:.4f} | "
+            #         f"Centered RMS: {centered_rms:.4f} | "
+            #         f"Mean: {mean:.4f} | "
+            #         f"Peak: {peak:.4f}",
+            #         end="",
+            #         flush=True,
+            #     )
+
+            #     next_report = now + 0.25
+
+            # if overflowed:
+            #     print("\nWarning: audio input overflowed.")
+
+            audio, overflowed = stream.read(block_size)
+
+            if not np.all(np.isfinite(audio)):
+                print("\nWarning: audio contains NaN or infinity.")
+
+            if np.max(np.abs(audio)) > 1.0:
+                print(
+                    f"\nOut-of-range audio samples: "
+                    f"min={np.min(audio):.4f}, "
+                    f"max={np.max(audio):.4f}, "
+                    f"dtype={audio.dtype}, "
+                    f"shape={audio.shape}"
+                )
+
+            samples = np.asarray(audio, dtype=np.float64)
+
+            mean = float(np.mean(samples))
+            centered = samples - mean
+
+            rms = float(np.sqrt(np.mean(np.square(samples))))
+            centered_rms = float(np.sqrt(np.mean(np.square(centered))))
+
+            minimum = float(np.min(samples))
+            maximum = float(np.max(samples))
+            peak = float(np.max(np.abs(samples)))
+
+            now = time.monotonic()
+
+            levels.append(rms)
+
+            if now >= next_report:
+                print(
+                    f"\rRMS: {rms:.4f} | "
+                    f"Centered RMS: {centered_rms:.4f} | "
+                    f"Mean: {mean:.4f} | "
+                    f"Min: {minimum:.4f} | "
+                    f"Max: {maximum:.4f} | "
+                    f"Peak: {peak:.4f}    ",
+                    end="",
+                    flush=True,
+                )
+                next_report = now + 0.25
+
+            # if overflowed:
+            #     print("\nWarning: audio input overflowed.")
+
+        print("\nMicrophone test finished.")
+        print(f"Overall minimum RMS: {min(levels):.4f}")
+        print(f"Overall average RMS: {np.mean(levels):.4f}")
+        print(f"Overall maximum RMS: {max(levels):.4f}")
+
 if __name__ == "__main__":
     list_audio_devices()
     print()
 
     try:
-        test_microphone(device=29, duration=10)
+        test_microphone(device=24, duration=10)
     except (sd.PortAudioError, RuntimeError) as error:
         print(f"Microphone test failed: {error}")
