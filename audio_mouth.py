@@ -59,19 +59,38 @@ def test_microphone(device=None, duration=5):
             audio, overflowed = stream.read(block_size)
 
             rms = float(np.sqrt(np.mean(np.square(audio))))
+            peak = float(np.max(np.abs(audio)))
+            max_sample = float(np.max(audio))
 
-            print(f"\rRMS: {rms:.6f}", end="", flush=True)
+            # print(f"\rRMS: {rms:.6f}", end="", flush=True)
+
+            print(
+                f"\rRMS: {rms:.6f} | "
+                f"Peak: {peak:.6f} | "
+                f"Max sample: {max_sample:.6f}",
+                end="",
+                flush=True,
+            )
 
             if overflowed:
                 print("\nWarning: audio input overflowed.")
 
         print("\nMicrophone test finished.")
 
+# if __name__ == "__main__":
+#     list_audio_devices()
+#     print()
+
+#     try:
+#         test_microphone()
+#     except (sd.PortAudioError, RuntimeError) as error:
+#         print(f"Microphone test failed: {error}")
+
 if __name__ == "__main__":
     list_audio_devices()
     print()
 
     try:
-        test_microphone()
+        test_microphone(device=29, duration=10)
     except (sd.PortAudioError, RuntimeError) as error:
         print(f"Microphone test failed: {error}")
