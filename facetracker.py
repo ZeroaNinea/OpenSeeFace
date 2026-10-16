@@ -276,6 +276,12 @@ if os.name == "nt":
     )
 args = parser.parse_args()
 
+if args.list_audio_devices:
+    from audio_mouth import list_audio_devices
+
+    list_audio_devices()
+    sys.exit(0)
+
 os.environ["OMP_NUM_THREADS"] = str(args.max_threads)
 
 
@@ -481,6 +487,24 @@ features = [
     "mouth_open",
     "mouth_wide",
 ]
+
+audio_mouth = None
+
+if args.audio_mouth:
+    from audio_mouth import AudioMouthController
+
+    audio_mouth = AudioMouthController(
+        device=args.audio_device,
+        threshold=args.audio_threshold,
+        max_level=args.audio_max_level,
+    )
+
+    if args.silent == 0:
+        print(f"Audio mouth tracking enabled: {audio_mouth.device_name}")
+        print(
+            f"Speech threshold: {args.audio_threshold:.3f}; "
+            f"maximum opening level: {args.audio_max_level:.3f}"
+        )
 
 if args.log_data != "":
     log = open(args.log_data, "w")
@@ -722,14 +746,37 @@ try:
                     packet.extend(bytearray(struct.pack("f", -z)))
                     if log is not None:
                         log.write(f",{x},{-y},{-z}")
+                # if f.current_features is None:
+                #     f.current_features = {}
+                # for feature in features:
+                #     if not feature in f.current_features:
+                #         f.current_features[feature] = 0
+                #     packet.extend(
+                #         bytearray(struct.pack("f", f.current_features[feature]))
+                #     )
+                #     if log is not None:
+                #         log.write(f",{f.current_features[feature]}")
                 if f.current_features is None:
                     f.current_features = {}
+                else:
+                    # f is a shallow copy, so avoid modifying the tracker's
+                    # original feature dictionary.
+                    f.current_features = dict(f.current_features)
+
+                if audio_mouth is not None:
+                    speaking, audio_open, audio_level = audio_mouth.get_state()
+
+                    if speaking:
+                        f.current_features["mouth_open"] = audio_open
+
                 for feature in features:
-                    if not feature in f.current_features:
+                    if feature not in f.current_features:
                         f.current_features[feature] = 0
+
                     packet.extend(
                         bytearray(struct.pack("f", f.current_features[feature]))
                     )
+
                     if log is not None:
                         log.write(f",{f.current_features[feature]}")
                 if log is not None:
@@ -831,6 +878,10 @@ except KeyboardInterrupt:
         print("Quitting")
 
 input_reader.close()
+
+if audio_mouth is not None:
+    audio_mouth.close()
+
 if out is not None:
     out.release()
 if args.visualize != 0:
