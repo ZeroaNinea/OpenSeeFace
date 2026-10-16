@@ -258,9 +258,7 @@ class AudioMouthController:
             raise ValueError("Audio threshold must be positive.")
 
         if max_level <= threshold:
-            raise ValueError(
-                "Maximum audio level must exceed the speech threshold."
-            )
+            raise ValueError("Maximum audio level must exceed the speech threshold.")
 
         if device is None:
             device = get_default_input_device()
@@ -311,8 +309,7 @@ class AudioMouthController:
 
             if self._speaking:
                 target = np.clip(
-                    (level - self.threshold)
-                    / (self.max_level - self.threshold),
+                    (level - self.threshold) / (self.max_level - self.threshold),
                     0.0,
                     1.0,
                 )
@@ -320,9 +317,7 @@ class AudioMouthController:
                 target = 0.0
 
             # Smooth the movement without adding much latency.
-            self._mouth_open += 0.45 * (
-                target - self._mouth_open
-            )
+            self._mouth_open += 0.45 * (target - self._mouth_open)
 
     def get_state(self):
         """Return (speaking, mouth_open, audio_level)."""
