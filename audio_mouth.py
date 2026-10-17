@@ -46,7 +46,7 @@ class AudioMouthController:
         self,
         device=None,
         threshold=0.12,
-        max_level=0.8,
+        max_level=0.2,
         samplerate=48000,
         blocksize=1024,
     ):
@@ -104,6 +104,7 @@ class AudioMouthController:
                 self._speaking = True
 
             if self._speaking:
+                print("Speaking!", self._speaking)
                 target = np.clip(
                     (level - self.threshold) / (self.max_level - self.threshold),
                     0.0,
