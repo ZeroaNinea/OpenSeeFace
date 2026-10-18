@@ -103,6 +103,8 @@ class AudioMouthController:
             elif level >= self.threshold:
                 self._speaking = True
 
+            print("Level: ", level)
+
             if self._speaking:
                 print("Speaking!", self._speaking)
                 target = np.clip(
