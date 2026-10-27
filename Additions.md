@@ -50,7 +50,7 @@ Next open Edit -> Advanced Audio Properties. Find your ALSA microphone source, a
 Check the available devices:
 
 ```bash
-python facetracker.py --list-audio-diveces
+python facetracker.py --list-audio-devices
 ```
 
 Now use the virtual audio output to run OpenSeeFace with audio mouth tracking:
