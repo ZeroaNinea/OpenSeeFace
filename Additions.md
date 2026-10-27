@@ -34,6 +34,12 @@ Then find its monitor source:
 pactl list short sources
 ```
 
+Get the ID of the monitor source:
+
+```bash
+pactl list short modules
+```
+
 If the sink was created suffessfully, this monitor should be available to capture audio sent to the virtual sink in OBS Studio.
 
 Now configure the OBS Studio:
